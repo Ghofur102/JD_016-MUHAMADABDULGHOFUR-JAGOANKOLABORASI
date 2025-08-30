@@ -1,6 +1,5 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import { createClient } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -11,7 +10,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export async function handleGoogleSignIn(role?: string) {
+export async function handleGoogleSignIn(role: string = "pengguna") {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
   });
@@ -20,11 +19,11 @@ export async function handleGoogleSignIn(role?: string) {
     console.error('Error saat login dengan Google:', error.message);
     return;
   } else {
-    createUserProfile(data, "pengguna");
-    //window.location.href = "/dashboard";
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      createUserProfile(user, role);
+    }
   }
-
-  console.log(data);
 
   return data;
 }
@@ -56,20 +55,30 @@ export async function createUserProfile(user: any, role: string) {
       return;
     }
 
-    // Insert ke tabel profil yang spesifik berdasarkan peran.
+    const profileData = { id_user: user.id };
+    let profileTable = '';
+
     switch (role) {
       case "digital":
-        await supabase.from("digital_profiles").insert({ id_user: user.id });
+        profileTable = "digital_profiles";
         break;
       case "tani":
-        await supabase.from("tani_profiles").insert({ id_user: user.id });
+        profileTable = "tani_profiles";
         break;
       case "bisnis":
-        await supabase.from("business_profiles").insert({ id_user: user.id });
+        profileTable = "business_profiles";
         break;
       default:
         console.warn("Role tidak dikenali, tidak ada profil khusus yang dibuat.");
-        break;
+        return;
+    }
+
+    if (profileTable) {
+      const { error: profileError } = await supabase.from(profileTable).insert(profileData);
+      if (profileError) {
+        console.error(`Error saat membuat profil di ${profileTable}:`, profileError.message);
+        return;
+      }
     }
 
     console.log('Profil pengguna berhasil dibuat!');
@@ -78,11 +87,35 @@ export async function createUserProfile(user: any, role: string) {
   }
 }
 
-export async function handleSignOut() {
+export async function handleSignOut(router: AppRouterInstance) {
   const { error } = await supabase.auth.signOut();
   if (error) {
-    console.error('Error saat keluar:' + error);
+    console.error('Error saat keluar:', error.message);
   } else {
-      window.location.href = "/";
+    router.push('/');
   }
+}
+
+export async function checkUserRole() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const { data, error } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (error) {
+      console.error('Error saat mengambil peran pengguna:', error.message);
+      return null;
+    }
+
+    return data ? data.role : null;
+  }
+  return null;
+}
+
+export async function checkAuth() {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
 }

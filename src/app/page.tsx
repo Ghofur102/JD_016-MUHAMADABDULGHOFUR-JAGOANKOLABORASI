@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useRouter } from 'next/navigation'
@@ -15,10 +14,15 @@ export default function Home() {
     router.push('/register')
   }
 
+  const navigateToDashboard = () => {
+    router.push('/dashboard')
+  }
+
   return (
     <LandingPage 
       onNavigateToLogin={navigateToLogin}
       onNavigateToRegister={navigateToRegister}
+      onNavigateToDashboard={navigateToDashboard}
     />
   )
 }

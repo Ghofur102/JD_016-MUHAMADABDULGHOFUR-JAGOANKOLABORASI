@@ -15,11 +15,13 @@ import {
   Menu,
   X
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { checkAuth } from "@/lib/auth/register";
 
 interface LandingPageProps {
   onNavigateToLogin: () => void;
   onNavigateToRegister: () => void;
+  onNavigateToDashboard: () => void;
 }
 
 const valuePropositions = [
@@ -67,8 +69,17 @@ const testimonials = [
   }
 ];
 
-export default function LandingPage({ onNavigateToLogin, onNavigateToRegister }: LandingPageProps) {
+export default function LandingPage({ onNavigateToLogin, onNavigateToRegister, onNavigateToDashboard }: LandingPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const user = await checkAuth();
+      setIsLoggedIn(!!user);
+    };
+    checkUser();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,13 +96,22 @@ export default function LandingPage({ onNavigateToLogin, onNavigateToRegister }:
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-3 lg:space-x-4">
-              <Button variant="ghost" onClick={onNavigateToLogin} className="text-sm lg:text-base">
-                Masuk
-              </Button>
-              <Button onClick={onNavigateToRegister} className="text-sm lg:text-base" variant="dark">
-                Daftar Sekarang
-                <ArrowRight className="ml-2 size-4" />
-              </Button>
+              {isLoggedIn ? (
+                <Button onClick={onNavigateToDashboard} className="text-sm lg:text-base" variant="dark">
+                  Go to Dashboard
+                  <ArrowRight className="ml-2 size-4" />
+                </Button>
+              ) : (
+                <>
+                  <Button variant="ghost" onClick={onNavigateToLogin} className="text-sm lg:text-base">
+                    Masuk
+                  </Button>
+                  <Button onClick={onNavigateToRegister} className="text-sm lg:text-base" variant="dark">
+                    Daftar Sekarang
+                    <ArrowRight className="ml-2 size-4" />
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -109,20 +129,29 @@ export default function LandingPage({ onNavigateToLogin, onNavigateToRegister }:
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
             <div className="md:hidden pb-4 space-y-2">
-              <Button 
-                variant="ghost" 
-                onClick={onNavigateToLogin}
-                className="w-full justify-start"
-              >
-                Masuk
-              </Button>
-              <Button 
-                onClick={onNavigateToRegister}
-                className="w-full" variant="dark"
-              >
-                Daftar Sekarang
-                <ArrowRight className="ml-2 size-4" />
-              </Button>
+              {isLoggedIn ? (
+                <Button onClick={onNavigateToDashboard} className="w-full" variant="dark">
+                  Go to Dashboard
+                  <ArrowRight className="ml-2 size-4" />
+                </Button>
+              ) : (
+                <>
+                  <Button 
+                    variant="ghost" 
+                    onClick={onNavigateToLogin}
+                    className="w-full justify-start"
+                  >
+                    Masuk
+                  </Button>
+                  <Button 
+                    onClick={onNavigateToRegister}
+                    className="w-full" variant="dark"
+                  >
+                    Daftar Sekarang
+                    <ArrowRight className="ml-2 size-4" />
+                  </Button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -147,13 +176,22 @@ export default function LandingPage({ onNavigateToLogin, onNavigateToRegister }:
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Button onClick={onNavigateToRegister} size="lg" className="text-base px-6 lg:px-8" variant="dark">
-                  Daftar Sekarang
-                  <ArrowRight className="ml-2 size-4" />
-                </Button>
-                <Button variant="outline" onClick={onNavigateToLogin} size="lg" className="text-base px-6 lg:px-8">
-                  Masuk
-                </Button>
+                {isLoggedIn ? (
+                  <Button onClick={onNavigateToDashboard} size="lg" className="text-base px-6 lg:px-8" variant="dark">
+                    Go to Dashboard
+                    <ArrowRight className="ml-2 size-4" />
+                  </Button>
+                ) : (
+                  <>
+                    <Button onClick={onNavigateToRegister} size="lg" className="text-base px-6 lg:px-8" variant="dark">
+                      Daftar Sekarang
+                      <ArrowRight className="ml-2 size-4" />
+                    </Button>
+                    <Button variant="outline" onClick={onNavigateToLogin} size="lg" className="text-base px-6 lg:px-8">
+                      Masuk
+                    </Button>
+                  </>
+                )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-sm text-muted-foreground">
                 <div className="flex items-center justify-center lg:justify-start space-x-2">

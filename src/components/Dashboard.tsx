@@ -169,7 +169,7 @@ export default function Dashboard({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleSignOut}
+                onClick={() => handleSignOut(router)}
                 className="text-sm lg:text-base"
               >
                 <LogOut className="size-4 lg:mr-2" />
@@ -214,7 +214,7 @@ export default function Dashboard({
               </Button>
               <Button
                 variant="outline"
-                onClick={handleSignOut}
+                onClick={() => handleSignOut(router)}
                 className="w-full justify-start"
               >
                 <LogOut className="size-4 mr-2" />

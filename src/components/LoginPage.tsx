@@ -139,7 +139,10 @@ export default function LoginPage({
                 onClick={async () => {
                   setIsLoading(true);
                   try {
-                    await handleGoogleSignIn();
+                    const { error } = await handleGoogleSignIn();
+                    if (!error) {
+                      onLoginSuccess("user");
+                    }
                   } finally {
                     setIsLoading(false);
                   }

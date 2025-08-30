@@ -1,13 +1,25 @@
 
 'use client'
 
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import LoginPage from '@/components/LoginPage'
+import { checkAuth } from '@/lib/auth/register'
 
 type UserType = "user" | "admin" | null;
 
 export default function Login() {
   const router = useRouter()
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const user = await checkAuth()
+      if (user) {
+        router.push('/dashboard')
+      }
+    }
+    checkUser()
+  }, [router])
 
   const navigateToLanding = () => {
     router.push('/')

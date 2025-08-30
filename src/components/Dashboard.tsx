@@ -2,36 +2,48 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
-import { Bell, MessageSquare, Users, Plus, Search, LogOut, Settings, User, Home, Menu, X, Edit } from "lucide-react";
+import {
+  Bell,
+  MessageSquare,
+  Users,
+  Plus,
+  Search,
+  LogOut,
+  User,
+  Menu,
+  X,
+  Edit,
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-import { handleSignOut, supabase } from "@/lib/auth/register";
+import { handleSignOut, supabase } from "@/lib/auth/register"; // Menggunakan supabase dari file auth
+import { useRouter } from "next/navigation"; // Menggunakan useRouter untuk navigasi
 
-// Mock data
+// Mock data, akan digantikan dengan data real
 const mockStats = {
   unreadRequests: 3,
-  answeredQuestions: 12
+  answeredQuestions: 12,
 };
 
 const mockActivities = [
   {
     id: 1,
-    message: "Ahmad Rizki menjawab pertanyaan 'Bagaimana cara integrase API di React?'",
+    message:
+      "Ahmad Rizki menjawab pertanyaan 'Bagaimana cara integrase API di React?'",
     time: "2 menit yang lalu",
-    type: "question_answered"
+    type: "question_answered",
   },
   {
     id: 2,
     message: "Siti Nurhaliza ingin berkolaborasi dalam proyek UI/UX Design",
     time: "15 menit yang lalu",
-    type: "collaboration"
+    type: "collaboration",
   },
   {
     id: 3,
     message: "Budi Santoso menjawab pertanyaan 'Tips optimasi database MySQL'",
     time: "1 jam yang lalu",
-    type: "question_answered"
-  }
+    type: "question_answered",
+  },
 ];
 
 const mockProfiles = [
@@ -40,22 +52,22 @@ const mockProfiles = [
     name: "Ahmad Rizki",
     skills: ["React", "Node.js"],
     avatar: "AR",
-    joinedAgo: "2 hari"
+    joinedAgo: "2 hari",
   },
   {
     id: 2,
     name: "Siti Nurhaliza",
     skills: ["UI/UX", "Figma"],
     avatar: "SN",
-    joinedAgo: "3 hari"
+    joinedAgo: "3 hari",
   },
   {
     id: 3,
     name: "Budi Santoso",
     skills: ["Python", "ML"],
     avatar: "BS",
-    joinedAgo: "4 hari"
-  }
+    joinedAgo: "4 hari",
+  },
 ];
 
 // Mock user team data - simulate user already has a team
@@ -66,7 +78,7 @@ const mockUserTeam = {
   status: "active",
   memberCount: 3,
   maxMembers: 5,
-  role: "leader" // user's role in the team
+  role: "leader", // user's role in the team
 };
 
 interface DashboardProps {
@@ -78,26 +90,40 @@ interface DashboardProps {
   onNavigateToBuatKolaborasi: () => void;
 }
 
-export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborator, onNavigateToProfileEdit, onNavigateToAjukanPertanyaan, onNavigateToDaftarNotifikasi, onNavigateToBuatKolaborasi }: DashboardProps) {
-  const userName = "Muhammad Faris";
+export default function Dashboard({
+  onNavigateToLogin,
+  onNavigateToCariKolaborator,
+  onNavigateToProfileEdit,
+  onNavigateToAjukanPertanyaan,
+  onNavigateToDaftarNotifikasi,
+  onNavigateToBuatKolaborasi,
+}: DashboardProps) {
+  const router = useRouter(); // Inisialisasi router
+  const [userName, setUserName] = useState<string>("Jagoan!");
+  const [userProfilePicture, setUserProfilePicture] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+
   // Mock state - dalam implementasi nyata, ini akan diambil dari API/context
-  const [userTeam, setUserTeam] = useState(mockUserTeam); // Set to null if user doesn't have team
+  const [userTeam, setUserTeam] = useState(mockUserTeam);
   const hasTeam = userTeam !== null;
   const isTeamLeader = userTeam?.role === "leader";
 
-  const handleLogout = async (): Promise<void> => {
-    // Handle logout logic here (clear session, etc.)
-    console.log("User logged out");
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
 
-    const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
-    const { error } = await supabase.auth.signOut();
-    // Navigate to login page
-    onNavigateToLogin();
-  };
+      if (!user) {
+        // Jika tidak ada user, redirect ke halaman login
+        router.push("/login");
+      } else {
+        // Jika ada user, perbarui state dengan data user
+        setUserName(user.user_metadata?.full_name || user.user_metadata?.name || "Jagoan!");
+        setUserProfilePicture(user.user_metadata?.picture || null);
+      }
+    };
+
+    checkUser();
+  }, [router]); // Tambahkan router sebagai dependency
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -111,15 +137,19 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
                 <span className="text-white font-bold text-lg lg:text-xl">J</span>
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-lg lg:text-xl font-bold text-gray-900">Jagoan Banyuwangi</h1>
-                <p className="text-xs lg:text-sm text-gray-500">Platform Kolaborasi</p>
+                <h1 className="text-lg lg:text-xl font-bold text-gray-900">
+                  Jagoan Banyuwangi
+                </h1>
+                <p className="text-xs lg:text-sm text-gray-500">
+                  Platform Kolaborasi
+                </p>
               </div>
             </div>
-            
+
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={onNavigateToDaftarNotifikasi}
                 className="text-sm lg:text-base"
@@ -127,8 +157,8 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
                 <Bell className="size-4 lg:mr-2" />
                 <span className="hidden lg:inline">Notifikasi</span>
               </Button>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={onNavigateToProfileEdit}
                 className="text-sm lg:text-base"
@@ -136,8 +166,8 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
                 <User className="size-4 lg:mr-2" />
                 <span className="hidden lg:inline">Profil Saya</span>
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={handleSignOut}
                 className="text-sm lg:text-base"
@@ -154,7 +184,11 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
                 size="sm"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
-                {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+                {mobileMenuOpen ? (
+                  <X className="size-5" />
+                ) : (
+                  <Menu className="size-5" />
+                )}
               </Button>
             </div>
           </div>
@@ -162,24 +196,24 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
             <div className="md:hidden pb-4 space-y-2">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={onNavigateToDaftarNotifikasi}
                 className="w-full justify-start"
               >
                 <Bell className="size-4 mr-2" />
                 Notifikasi
               </Button>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={onNavigateToProfileEdit}
                 className="w-full justify-start"
               >
                 <User className="size-4 mr-2" />
                 Profil Saya
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleSignOut}
                 className="w-full justify-start"
               >
@@ -195,10 +229,11 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
         {/* Welcome Section */}
         <div className="text-center space-y-3">
           <h1 className="text-2xl sm:text-3xl lg:text-3xl font-bold text-gray-900">
-            Selamat Datang, Jagoan! 👋
+            Selamat Datang, {userName}! 👋
           </h1>
           <p className="text-sm sm:text-base lg:text-lg text-gray-600 max-w-3xl mx-auto">
-            Mari berkolaborasi dan wujudkan ide-ide hebat bersama teman-teman lainnya di Banyuwangi
+            Mari berkolaborasi dan wujudkan ide-ide hebat bersama teman-teman
+            lainnya di Banyuwangi
           </p>
         </div>
 
@@ -215,10 +250,17 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
                     Tim Aktif: {userTeam.projectName}
                   </h3>
                   <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <Badge variant="secondary" className="bg-purple-100 text-purple-700">
-                      {userTeam.category === "digital" ? "Jagoan Digital" : 
-                       userTeam.category === "tani" ? "Jagoan Tani" : 
-                       userTeam.category === "bisnis" ? "Jagoan Bisnis" : "Multi-bidang"}
+                    <Badge
+                      variant="secondary"
+                      className="bg-purple-100 text-purple-700"
+                    >
+                      {userTeam.category === "digital"
+                        ? "Jagoan Digital"
+                        : userTeam.category === "tani"
+                        ? "Jagoan Tani"
+                        : userTeam.category === "bisnis"
+                        ? "Jagoan Bisnis"
+                        : "Multi-bidang"}
                     </Badge>
                     <Badge className="bg-green-50 text-green-700 border-green-200">
                       {userTeam.status === "active" ? "Aktif" : "Selesai"}
@@ -233,14 +275,13 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
                     )}
                   </div>
                   <p className="text-sm text-gray-600">
-                    {isTeamLeader ? 
-                      "Anda adalah leader tim ini. Kelola anggota dan undang kolaborator baru." :
-                      "Anda adalah anggota tim ini. Kontribusi terbaik Anda sangat dibutuhkan."
-                    }
+                    {isTeamLeader
+                      ? "Anda adalah leader tim ini. Kelola anggota dan undang kolaborator baru."
+                      : "Anda adalah anggota tim ini. Kontribusi terbaik Anda sangat dibutuhkan."}
                   </p>
                 </div>
                 {isTeamLeader && (
-                  <Button 
+                  <Button
                     onClick={onNavigateToBuatKolaborasi}
                     className="w-full sm:w-auto text-sm lg:text-base"
                   >
@@ -260,11 +301,16 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 max-w-6xl mx-auto">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-100 hover:border-blue-300">
-              <CardContent className="p-6 lg:p-8 text-center" onClick={onNavigateToAjukanPertanyaan}>
+              <CardContent
+                className="p-6 lg:p-8 text-center"
+                onClick={onNavigateToAjukanPertanyaan}
+              >
                 <div className="w-12 h-12 lg:w-16 lg:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <MessageSquare className="size-6 lg:size-8 text-blue-600" />
                 </div>
-                <h3 className="text-lg lg:text-xl font-bold text-gray-900 mb-2">Tanya Sesuatu</h3>
+                <h3 className="text-lg lg:text-xl font-bold text-gray-900 mb-2">
+                  Tanya Sesuatu
+                </h3>
                 <p className="text-sm lg:text-base text-gray-600 mb-4">
                   Ada pertanyaan? Tanya kepada komunitas jagoan lainnya
                 </p>
@@ -276,20 +322,35 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
             </Card>
 
             <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-purple-100 hover:border-purple-300">
-              <CardContent className="p-6 lg:p-8 text-center" onClick={onNavigateToBuatKolaborasi}>
+              <CardContent
+                className="p-6 lg:p-8 text-center"
+                onClick={onNavigateToBuatKolaborasi}
+              >
                 <div className="w-12 h-12 lg:w-16 lg:h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  {hasTeam ? <Edit className="size-6 lg:size-8 text-purple-600" /> : <Users className="size-6 lg:size-8 text-purple-600" />}
+                  {hasTeam ? (
+                    <Edit className="size-6 lg:size-8 text-purple-600" />
+                  ) : (
+                    <Users className="size-6 lg:size-8 text-purple-600" />
+                  )}
                 </div>
                 <h3 className="text-lg lg:text-xl font-bold text-gray-900 mb-2">
-                  {hasTeam ? (isTeamLeader ? "Edit Tim Kolaborasi" : "Lihat Tim Saya") : "Buat Tim Kolaborasi"}
+                  {hasTeam
+                    ? isTeamLeader
+                      ? "Edit Tim Kolaborasi"
+                      : "Lihat Tim Saya"
+                    : "Buat Tim Kolaborasi"}
                 </h3>
                 <p className="text-sm lg:text-base text-gray-600 mb-4">
-                  {hasTeam ? 
-                    (isTeamLeader ? "Kelola tim dan undang anggota baru" : "Lihat detail tim dan anggota") :
-                    "Bentuk tim untuk mengerjakan proyek impian Anda"
-                  }
+                  {hasTeam
+                    ? isTeamLeader
+                      ? "Kelola tim dan undang anggota baru"
+                      : "Lihat detail tim dan anggota"
+                    : "Bentuk tim untuk mengerjakan proyek impian Anda"}
                 </p>
-                <Button variant="outline" className="w-full border-purple-300 text-purple-600 hover:bg-purple-50 text-sm lg:text-base">
+                <Button
+                  variant="outline"
+                  className="w-full border-purple-300 text-purple-600 hover:bg-purple-50 text-sm lg:text-base"
+                >
                   {hasTeam ? (
                     <>
                       <Edit className="mr-2 size-4" />
@@ -306,15 +367,23 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
             </Card>
 
             <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-green-100 hover:border-green-300 sm:col-span-2 lg:col-span-1">
-              <CardContent className="p-6 lg:p-8 text-center" onClick={onNavigateToCariKolaborator}>
+              <CardContent
+                className="p-6 lg:p-8 text-center"
+                onClick={onNavigateToCariKolaborator}
+              >
                 <div className="w-12 h-12 lg:w-16 lg:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Search className="size-6 lg:size-8 text-green-600" />
                 </div>
-                <h3 className="text-lg lg:text-xl font-bold text-gray-900 mb-2">Cari Teman Kerja</h3>
+                <h3 className="text-lg lg:text-xl font-bold text-gray-900 mb-2">
+                  Cari Teman Kerja
+                </h3>
                 <p className="text-sm lg:text-base text-gray-600 mb-4">
                   Temukan partner untuk mengerjakan proyek bersama
                 </p>
-                <Button variant="outline" className="w-full text-sm lg:text-base">
+                <Button
+                  variant="outline"
+                  className="w-full text-sm lg:text-base"
+                >
                   <Search className="mr-2 size-4" />
                   Cari Kolaborator
                 </Button>
@@ -330,20 +399,36 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
           </h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
             <div className="text-center p-3 lg:p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl lg:text-3xl font-bold text-blue-600">{mockStats.unreadRequests}</div>
-              <div className="text-xs lg:text-sm text-gray-600 mt-1">Permintaan Kolaborasi</div>
+              <div className="text-2xl lg:text-3xl font-bold text-blue-600">
+                {mockStats.unreadRequests}
+              </div>
+              <div className="text-xs lg:text-sm text-gray-600 mt-1">
+                Permintaan Kolaborasi
+              </div>
             </div>
             <div className="text-center p-3 lg:p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl lg:text-3xl font-bold text-green-600">{mockStats.answeredQuestions}</div>
-              <div className="text-xs lg:text-sm text-gray-600 mt-1">Pertanyaan Dijawab</div>
+              <div className="text-2xl lg:text-3xl font-bold text-green-600">
+                {mockStats.answeredQuestions}
+              </div>
+              <div className="text-xs lg:text-sm text-gray-600 mt-1">
+                Pertanyaan Dijawab
+              </div>
             </div>
             <div className="text-center p-3 lg:p-4 bg-orange-50 rounded-lg">
-              <div className="text-2xl lg:text-3xl font-bold text-orange-600">5</div>
-              <div className="text-xs lg:text-sm text-gray-600 mt-1">Proyek Aktif</div>
+              <div className="text-2xl lg:text-3xl font-bold text-orange-600">
+                5
+              </div>
+              <div className="text-xs lg:text-sm text-gray-600 mt-1">
+                Proyek Aktif
+              </div>
             </div>
             <div className="text-center p-3 lg:p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl lg:text-3xl font-bold text-purple-600">28</div>
-              <div className="text-xs lg:text-sm text-gray-600 mt-1">Teman Kolaborasi</div>
+              <div className="text-2xl lg:text-3xl font-bold text-purple-600">
+                28
+              </div>
+              <div className="text-xs lg:text-sm text-gray-600 mt-1">
+                Teman Kolaborasi
+              </div>
             </div>
           </div>
         </div>
@@ -359,16 +444,23 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
             </CardHeader>
             <CardContent className="space-y-3 lg:space-y-4">
               {mockActivities.map((activity) => (
-                <div key={activity.id} className="flex gap-3 lg:gap-4 p-3 lg:p-4 bg-gray-50 rounded-lg">
+                <div
+                  key={activity.id}
+                  className="flex gap-3 lg:gap-4 p-3 lg:p-4 bg-gray-50 rounded-lg"
+                >
                   <div className="w-3 h-3 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
                   <div className="space-y-2 min-w-0">
-                    <p className="text-sm lg:text-base text-gray-900 leading-relaxed">{activity.message}</p>
-                    <p className="text-xs lg:text-sm text-gray-500">{activity.time}</p>
+                    <p className="text-sm lg:text-base text-gray-900 leading-relaxed">
+                      {activity.message}
+                    </p>
+                    <p className="text-xs lg:text-sm text-gray-500">
+                      {activity.time}
+                    </p>
                   </div>
                 </div>
               ))}
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="w-full text-sm lg:text-base py-3 lg:py-4 mt-4"
                 onClick={onNavigateToDaftarNotifikasi}
               >
@@ -388,31 +480,50 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
             <CardContent>
               <div className="space-y-3 lg:space-y-4">
                 {mockProfiles.map((profile) => (
-                  <div key={profile.id} className="flex items-center gap-3 lg:gap-4 p-3 lg:p-4 bg-gray-50 rounded-lg">
+                  <div
+                    key={profile.id}
+                    className="flex items-center gap-3 lg:gap-4 p-3 lg:p-4 bg-gray-50 rounded-lg"
+                  >
                     <Avatar className="h-10 w-10 lg:h-12 lg:w-12">
                       <AvatarFallback className="bg-blue-600 text-white text-sm lg:text-lg">
                         {profile.avatar}
                       </AvatarFallback>
+                      {/* Tampilkan gambar profil asli jika ada */}
+                      {userProfilePicture && (
+                        <AvatarImage src={userProfilePicture} alt={userName} />
+                      )}
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-gray-900 text-sm lg:text-base">{profile.name}</h4>
-                      <p className="text-xs lg:text-sm text-gray-500">Bergabung {profile.joinedAgo}</p>
+                      <h4 className="font-bold text-gray-900 text-sm lg:text-base">
+                        {profile.name}
+                      </h4>
+                      <p className="text-xs lg:text-sm text-gray-500">
+                        Bergabung {profile.joinedAgo}
+                      </p>
                       <div className="flex flex-wrap gap-1 mt-2">
                         {profile.skills.map((skill, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="text-xs"
+                          >
                             {skill}
                           </Badge>
                         ))}
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" className="text-xs lg:text-sm px-3 lg:px-4 py-2 flex-shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs lg:text-sm px-3 lg:px-4 py-2 flex-shrink-0"
+                    >
                       Lihat Profil
                     </Button>
                   </div>
                 ))}
               </div>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="w-full text-sm lg:text-base py-3 lg:py-4 mt-4"
                 onClick={onNavigateToCariKolaborator}
               >
@@ -429,8 +540,8 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
               Butuh Bantuan?
             </h3>
             <p className="text-sm lg:text-base text-gray-600 mb-6 max-w-2xl mx-auto">
-              Jika Anda memiliki pertanyaan atau kesulitan menggunakan platform ini, 
-              jangan ragu untuk menghubungi tim support kami.
+              Jika Anda memiliki pertanyaan atau kesulitan menggunakan platform
+              ini, jangan ragu untuk menghubungi tim support kami.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button variant="outline" className="text-sm lg:text-base">

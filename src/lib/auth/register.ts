@@ -1,4 +1,6 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { createClient } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -9,17 +11,20 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export async function handleGoogleSignIn(role: string) {
+export async function handleGoogleSignIn(role?: string) {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback?role=${role}`,
-    },
   });
 
   if (error) {
     console.error('Error saat login dengan Google:', error.message);
+    return;
+  } else {
+    createUserProfile(data, "pengguna");
+    //window.location.href = "/dashboard";
   }
+
+  console.log(data);
 
   return data;
 }
@@ -75,8 +80,9 @@ export async function createUserProfile(user: any, role: string) {
 
 export async function handleSignOut() {
   const { error } = await supabase.auth.signOut();
-  window.location.href = "/";
   if (error) {
-    console.error('Error saat keluar:', error.message);
+    console.error('Error saat keluar:' + error);
+  } else {
+      window.location.href = "/";
   }
 }

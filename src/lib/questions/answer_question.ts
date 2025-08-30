@@ -9,26 +9,28 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export async function uploadQuestion(question: string) {
+export async function uploadQuestion({ question }: { question: string }) {
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-            const { data: dataQuestion, error: errorDataQuestion } = await supabase.from("question").insert({
-                created_at: new Date().toISOString,
+            const { data: dataQuestion, error: errorDataQuestion } = await supabase.from("questions").insert({
+                created_at: new Date().toISOString(),
                 question: question,
                 answer: null,
                 id_user: user.id,
             });
 
             if (errorDataQuestion) {
-                console.log(errorDataQuestion);
+                return(errorDataQuestion);
             }
+            console.log("data question", dataQuestion);
+            return(dataQuestion);
         } else {
-            console.log("anda tidak diizinkan mengupload pertanyaan.");
-            window.location.href = "/login";
+            return("anda tidak diizinkan mengupload pertanyaan.");
         }
     } catch (error) {
-        console.log(error);
+        console.log("error", error);
+        return(error);
     }
 }
 

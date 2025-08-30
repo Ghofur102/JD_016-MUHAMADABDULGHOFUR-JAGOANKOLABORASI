@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -9,6 +9,8 @@ import {
 } from "./ui/card";
 import { ArrowLeft, Menu, X } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
+import { handleGoogleSignIn, supabase } from "@/lib/auth/register";
+import { useRouter } from "next/navigation";
 
 interface LoginPageProps {
   onNavigateToLanding: () => void;
@@ -28,24 +30,25 @@ export default function LoginPage({
     // Quick admin access for demo
     onLoginSuccess("admin");
   };
+  
+  const router = useRouter();
 
-  const handleGoogleSignIn = async (): Promise<void> => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-    });
-
-    if(error) {
-      console.log(error);
-      
-    } 
-
-    window.location.href = "/dashboard";
-    
-  };
+  useEffect(() => {
+      const checkUser = async () => {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+  
+        if (user) {
+          // Jika tidak ada user, redirect ke halaman login
+          router.push("/dashboard");
+        } else {
+         
+        }
+      };
+  
+      checkUser();
+    }, [router]); // Tambahkan router sebagai dependency
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -133,7 +136,14 @@ export default function LoginPage({
             <CardContent className="space-y-4 lg:space-y-6">
               {/* Primary Google Login */}
               <Button
-                onClick={handleGoogleSignIn}
+                onClick={async () => {
+                  setIsLoading(true);
+                  try {
+                    await handleGoogleSignIn();
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
                 disabled={isLoading}
                 className="w-full h-11 lg:h-12 text-sm lg:text-base"
               >

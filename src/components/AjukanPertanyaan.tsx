@@ -1,23 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { handleSignOut, supabase } from "@/lib/auth/register"; // Menggunakan supabase dari file auth
+import { useRouter } from "next/navigation"; // Menggunakan useRouter untuk navigasi
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
-import { 
-  ArrowLeft, 
-  Send, 
-  HelpCircle, 
-  Tag, 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./ui/accordion";
+import {
+  ArrowLeft,
+  Send,
+  HelpCircle,
+  Tag,
   Clock,
   MessageSquare,
   ThumbsUp,
-  User
+  User,
 } from "lucide-react";
+import { uploadQuestion } from "@/lib/questions/answer_question";
 
 interface AjukanPertanyaanProps {
   onNavigateToDashboard: () => void;
@@ -28,54 +42,62 @@ const faqData = [
   {
     id: 1,
     question: "Bagaimana cara memulai kolaborasi dengan jagoan lain?",
-    answer: "Anda bisa mencari kolaborator melalui halaman 'Cari Kolaborator', lalu klik tombol 'Hubungi via WhatsApp' pada profil yang menarik. Pastikan untuk memperkenalkan diri dan menjelaskan proyek yang ingin dikerjakan bersama.",
+    answer:
+      "Anda bisa mencari kolaborator melalui halaman 'Cari Kolaborator', lalu klik tombol 'Hubungi via WhatsApp' pada profil yang menarik. Pastikan untuk memperkenalkan diri dan menjelaskan proyek yang ingin dikerjakan bersama.",
     category: "Kolaborasi",
     likes: 15,
-    replies: 3
+    replies: 3,
   },
   {
     id: 2,
     question: "Apakah ada biaya untuk menggunakan platform Jagoan Banyuwangi?",
-    answer: "Platform Jagoan Banyuwangi gratis untuk digunakan. Kami percaya bahwa kolaborasi dan berbagi pengetahuan harus dapat diakses oleh semua orang di Banyuwangi.",
+    answer:
+      "Platform Jagoan Banyuwangi gratis untuk digunakan. Kami percaya bahwa kolaborasi dan berbagi pengetahuan harus dapat diakses oleh semua orang di Banyuwangi.",
     category: "Platform",
     likes: 23,
-    replies: 1
+    replies: 1,
   },
   {
     id: 3,
     question: "Bagaimana cara meningkatkan visibilitas profil saya?",
-    answer: "Lengkapi profil Anda dengan foto, deskripsi yang menarik, portfolio terbaik, dan skills yang relevan. Aktif menjawab pertanyaan dan berkolaborasi juga akan meningkatkan reputasi Anda di platform.",
+    answer:
+      "Lengkapi profil Anda dengan foto, deskripsi yang menarik, portfolio terbaik, dan skills yang relevan. Aktif menjawab pertanyaan dan berkolaborasi juga akan meningkatkan reputasi Anda di platform.",
     category: "Profil",
     likes: 12,
-    replies: 5
+    replies: 5,
   },
   {
     id: 4,
     question: "Apa yang harus dilakukan jika mengalami kendala teknis?",
-    answer: "Jika mengalami kendala teknis, Anda bisa menghubungi tim support melalui WhatsApp atau email yang tersedia di halaman kontak. Tim kami siap membantu 24/7.",
+    answer:
+      "Jika mengalami kendala teknis, Anda bisa menghubungi tim support melalui WhatsApp atau email yang tersedia di halaman kontak. Tim kami siap membantu 24/7.",
     category: "Support",
     likes: 8,
-    replies: 2
+    replies: 2,
   },
   {
     id: 5,
     question: "Bagaimana cara bergabung dengan program PKM atau hibah lainnya?",
-    answer: "Informasi tentang PKM dan hibah akan diumumkan melalui platform dan grup WhatsApp. Pastikan Anda mengaktifkan notifikasi dan bergabung dengan komunitas untuk mendapat update terbaru.",
+    answer:
+      "Informasi tentang PKM dan hibah akan diumumkan melalui platform dan grup WhatsApp. Pastikan Anda mengaktifkan notifikasi dan bergabung dengan komunitas untuk mendapat update terbaru.",
     category: "Program",
     likes: 31,
-    replies: 7
+    replies: 7,
   },
   {
     id: 6,
     question: "Apakah saya bisa mengganti kategori jagoan setelah mendaftar?",
-    answer: "Ya, Anda bisa mengganti kategori jagoan melalui halaman edit profil. Namun pastikan perubahan tersebut sesuai dengan keahlian dan fokus Anda saat ini.",
+    answer:
+      "Ya, Anda bisa mengganti kategori jagoan melalui halaman edit profil. Namun pastikan perubahan tersebut sesuai dengan keahlian dan fokus Anda saat ini.",
     category: "Profil",
     likes: 6,
-    replies: 1
-  }
+    replies: 1,
+  },
 ];
 
-export default function AjukanPertanyaan({ onNavigateToDashboard }: AjukanPertanyaanProps) {
+export default function AjukanPertanyaan({
+  onNavigateToDashboard,
+}: AjukanPertanyaanProps) {
   const [formData, setFormData] = useState({
     question: "",
   });
@@ -83,30 +105,52 @@ export default function AjukanPertanyaan({ onNavigateToDashboard }: AjukanPertan
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    console.log("Question submitted:", formData);
+
+    const resultUploadQuestion = await uploadQuestion(formData);
+
+    console.log("Question submitted:", resultUploadQuestion);
     setIsSubmitting(false);
-    
+
     // Reset form
     setFormData({
       question: "",
     });
-    
+
     // Show success message (you could add a toast here)
-    alert("Pertanyaan berhasil diajukan! Tim kami akan merespons dalam 24 jam.");
+    alert(
+      resultUploadQuestion ??
+        "Pertanyaan berhasil diajukan! Tim kami akan merespons dalam 24 jam."
+    );
   };
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        // Jika tidak ada user, redirect ke halaman login
+        router.push("/login");
+      } else {
+        // Jika ada user, perbarui state dengan data user
+       
+      }
+    };
+
+    checkUser();
+  }, [router]); // Tambahkan router sebagai dependency
 
   const isFormValid = formData.question.trim();
 
@@ -122,7 +166,11 @@ export default function AjukanPertanyaan({ onNavigateToDashboard }: AjukanPertan
               </div>
               <span className="font-bold text-lg">Jagoan Banyuwangi</span>
             </div>
-            <Button variant="ghost" className="flex items-center gap-2" onClick={onNavigateToDashboard}>
+            <Button
+              variant="ghost"
+              className="flex items-center gap-2"
+              onClick={onNavigateToDashboard}
+            >
               <ArrowLeft className="size-4" />
               Kembali ke Dashboard
             </Button>
@@ -157,7 +205,9 @@ export default function AjukanPertanyaan({ onNavigateToDashboard }: AjukanPertan
                     <Textarea
                       id="description"
                       value={formData.question}
-                      onChange={(e) => handleInputChange("description", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("question", e.target.value)
+                      }
                       placeholder="Jelaskan pertanyaan Anda secara detail. Semakin spesifik, semakin baik jawaban yang akan Anda dapatkan..."
                       rows={6}
                       maxLength={1000}
@@ -166,11 +216,11 @@ export default function AjukanPertanyaan({ onNavigateToDashboard }: AjukanPertan
                       {formData.question.length}/1000 karakter
                     </p>
                   </div>
-                
+
                   {/* Submit Button */}
-                  <Button 
-                    type="button" 
-                    className="w-full" 
+                  <Button
+                    type="submit"
+                    className="w-full"
                     disabled={!isFormValid || isSubmitting}
                   >
                     {isSubmitting ? (
@@ -227,7 +277,9 @@ export default function AjukanPertanyaan({ onNavigateToDashboard }: AjukanPertan
         {/* FAQ Section */}
         <div className="mt-12">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-2">Pertanyaan yang Sering Diajukan</h2>
+            <h2 className="text-2xl font-bold mb-2">
+              Pertanyaan yang Sering Diajukan
+            </h2>
             <p className="text-muted-foreground">
               Mungkin jawaban yang Anda cari sudah tersedia di sini
             </p>
@@ -247,7 +299,9 @@ export default function AjukanPertanyaan({ onNavigateToDashboard }: AjukanPertan
                     </AccordionTrigger>
                     <AccordionContent>
                       <div className="pl-6 pt-4">
-                        <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
+                        <p className="text-muted-foreground leading-relaxed">
+                          {faq.answer}
+                        </p>
                       </div>
                     </AccordionContent>
                   </AccordionItem>

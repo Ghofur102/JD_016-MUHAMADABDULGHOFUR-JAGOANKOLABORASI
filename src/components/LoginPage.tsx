@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Checkbox } from "./ui/checkbox";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { Eye, EyeOff, ArrowLeft, Menu, X } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { ArrowLeft, Menu, X } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
 
 interface LoginPageProps {
   onNavigateToLanding: () => void;
@@ -13,58 +16,35 @@ interface LoginPageProps {
   onLoginSuccess: (userType: "user" | "admin") => void;
 }
 
-export default function LoginPage({ onNavigateToLanding, onNavigateToRegister, onLoginSuccess }: LoginPageProps) {
+export default function LoginPage({
+  onNavigateToLanding,
+  onNavigateToRegister,
+  onLoginSuccess,
+}: LoginPageProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    emailOrPhone: "",
-    password: "",
-    rememberMe: false
-  });
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleCheckboxChange = (checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      rememberMe: checked
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempt:", formData);
-    
-    // Check for admin credentials
-    if (formData.emailOrPhone === "admin@gmail.com" && formData.password === "1234") {
-      // Admin login
-      onLoginSuccess("admin");
-    } else {
-      // Regular user login (for demo purposes, any other credentials work)
-      onLoginSuccess("user");
-    }
-  };
-
-  const handleGoogleLogin = () => {
-    setIsLoading(true);
-    // Simulate Google OAuth
-    setTimeout(() => {
-      setIsLoading(false);
-      onLoginSuccess("user");
-    }, 1500);
-  };
 
   const handleAdminLogin = () => {
     // Quick admin access for demo
     onLoginSuccess("admin");
+  };
+
+  const handleGoogleSignIn = async (): Promise<void> => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+    });
+
+    if(error) {
+      console.log(error);
+      
+    } 
+
+    window.location.href = "/dashboard";
+    
   };
 
   return (
@@ -75,14 +55,22 @@ export default function LoginPage({ onNavigateToLanding, onNavigateToRegister, o
           <div className="flex justify-between items-center h-16 lg:h-20">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 lg:w-10 lg:h-10 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg lg:text-xl">J</span>
+                <span className="text-primary-foreground font-bold text-lg lg:text-xl">
+                  J
+                </span>
               </div>
-              <span className="font-bold text-lg lg:text-xl">Jagoan Banyuwangi</span>
+              <span className="font-bold text-lg lg:text-xl">
+                Jagoan Banyuwangi
+              </span>
             </div>
-            
+
             {/* Desktop Navigation */}
             <div className="hidden sm:block">
-              <Button variant="ghost" className="flex items-center gap-2 text-sm lg:text-base" onClick={onNavigateToLanding}>
+              <Button
+                variant="ghost"
+                className="flex items-center gap-2 text-sm lg:text-base"
+                onClick={onNavigateToLanding}
+              >
                 <ArrowLeft className="size-4" />
                 Kembali ke Beranda
               </Button>
@@ -95,7 +83,11 @@ export default function LoginPage({ onNavigateToLanding, onNavigateToRegister, o
                 size="sm"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
-                {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+                {mobileMenuOpen ? (
+                  <X className="size-5" />
+                ) : (
+                  <Menu className="size-5" />
+                )}
               </Button>
             </div>
           </div>
@@ -103,8 +95,8 @@ export default function LoginPage({ onNavigateToLanding, onNavigateToRegister, o
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
             <div className="sm:hidden pb-4">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={onNavigateToLanding}
                 className="w-full justify-start"
               >
@@ -130,7 +122,9 @@ export default function LoginPage({ onNavigateToLanding, onNavigateToRegister, o
 
           <Card className="shadow-xl border-0">
             <CardHeader className="space-y-1 pb-4 lg:pb-6">
-              <CardTitle className="text-xl lg:text-2xl text-center">Masuk</CardTitle>
+              <CardTitle className="text-xl lg:text-2xl text-center">
+                Masuk
+              </CardTitle>
               <CardDescription className="text-center text-sm lg:text-base">
                 Gunakan akun Google untuk masuk dengan mudah
               </CardDescription>
@@ -138,8 +132,8 @@ export default function LoginPage({ onNavigateToLanding, onNavigateToRegister, o
 
             <CardContent className="space-y-4 lg:space-y-6">
               {/* Primary Google Login */}
-              <Button 
-                onClick={handleGoogleLogin}
+              <Button
+                onClick={handleGoogleSignIn}
                 disabled={isLoading}
                 className="w-full h-11 lg:h-12 text-sm lg:text-base"
               >
@@ -147,7 +141,10 @@ export default function LoginPage({ onNavigateToLanding, onNavigateToRegister, o
                   "Menghubungkan..."
                 ) : (
                   <>
-                    <svg className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3" viewBox="0 0 24 24">
+                    <svg
+                      className="w-4 h-4 lg:w-5 lg:h-5 mr-2 lg:mr-3"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         fill="currentColor"
                         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -183,9 +180,9 @@ export default function LoginPage({ onNavigateToLanding, onNavigateToRegister, o
               </div>
 
               {/* Admin Quick Access */}
-              <Button 
+              <Button
                 onClick={handleAdminLogin}
-                variant="outline" 
+                variant="outline"
                 className="w-full h-11 lg:h-12 text-sm lg:text-base border-red-200 text-red-600 hover:bg-red-50"
               >
                 Masuk sebagai Admin
@@ -193,58 +190,17 @@ export default function LoginPage({ onNavigateToLanding, onNavigateToRegister, o
 
               <div className="text-center space-y-2">
                 <p className="text-sm text-gray-600">
-                  Belum punya akun?{" "}
-                  <button 
+                  Belum punya akun?
+                  <button
                     onClick={onNavigateToRegister}
                     className="text-primary hover:text-primary/80 transition-colors font-medium"
                   >
                     Daftar di sini
                   </button>
                 </p>
-                <p className="text-xs text-gray-500">
-                  (Admin demo: admin@gmail.com / 1234)
-                </p>
               </div>
             </CardContent>
           </Card>
-
-          {/* Social Login Options */}
-          <div className="mt-4 lg:mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gradient-to-br from-blue-50 via-white to-purple-50 text-gray-500">
-                  Atau masuk dengan
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-4 lg:mt-6 grid gap-3">
-              <Button variant="outline" className="h-10 lg:h-11 text-sm lg:text-base border">
-                <svg className="w-4 h-4 lg:w-5 lg:h-5 mr-2" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  />
-                </svg>
-                Google
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
 

@@ -75,22 +75,9 @@ const faqData = [
   }
 ];
 
-const categories = [
-  "Umum",
-  "Kolaborasi", 
-  "Profil",
-  "Platform",
-  "Support",
-  "Program",
-  "Teknis"
-];
-
 export default function AjukanPertanyaan({ onNavigateToDashboard }: AjukanPertanyaanProps) {
   const [formData, setFormData] = useState({
-    title: "",
-    category: "",
-    description: "",
-    tags: ""
+    question: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -114,17 +101,14 @@ export default function AjukanPertanyaan({ onNavigateToDashboard }: AjukanPertan
     
     // Reset form
     setFormData({
-      title: "",
-      category: "",
-      description: "",
-      tags: ""
+      question: "",
     });
     
     // Show success message (you could add a toast here)
     alert("Pertanyaan berhasil diajukan! Tim kami akan merespons dalam 24 jam.");
   };
 
-  const isFormValid = formData.title.trim() && formData.category && formData.description.trim();
+  const isFormValid = formData.question.trim();
 
   return (
     <div className="min-h-screen bg-background">
@@ -167,40 +151,25 @@ export default function AjukanPertanyaan({ onNavigateToDashboard }: AjukanPertan
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Title */}
-                  <div>
-                    <Label htmlFor="title">Judul Pertanyaan *</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => handleInputChange("title", e.target.value)}
-                      placeholder="Tulis judul pertanyaan yang jelas dan spesifik..."
-                      maxLength={100}
-                    />
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {formData.title.length}/100 karakter
-                    </p>
-                  </div>
-
                   {/* Description */}
                   <div>
                     <Label htmlFor="description">Detail Pertanyaan *</Label>
                     <Textarea
                       id="description"
-                      value={formData.description}
+                      value={formData.question}
                       onChange={(e) => handleInputChange("description", e.target.value)}
                       placeholder="Jelaskan pertanyaan Anda secara detail. Semakin spesifik, semakin baik jawaban yang akan Anda dapatkan..."
                       rows={6}
                       maxLength={1000}
                     />
                     <p className="text-sm text-muted-foreground mt-1">
-                      {formData.description.length}/1000 karakter
+                      {formData.question.length}/1000 karakter
                     </p>
                   </div>
                 
                   {/* Submit Button */}
                   <Button 
-                    type="submit" 
+                    type="button" 
                     className="w-full" 
                     disabled={!isFormValid || isSubmitting}
                   >

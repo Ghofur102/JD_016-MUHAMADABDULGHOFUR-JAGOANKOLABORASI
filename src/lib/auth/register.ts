@@ -1,58 +1,82 @@
-import { createClient } from "../../utils/supabase/server";
-import { RegisterFormValues, registerSchema } from "../../schemas/auth.schema";
+import { createClient } from "@supabase/supabase-js";
 
-export async function registerUser(payload: RegisterFormValues) {
-  const validatedData = registerSchema.parse(payload);
-  const supabase = await createClient();
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  const { data: registerData, error: registerError } =
-    await supabase.auth.signUp({
-      email: validatedData.email,
-      password: validatedData.password,
-      options: {
-        data: {
-          username: validatedData.username,
-        },
-      },
-    });
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Variabel lingkungan Supabase belum diatur!');
+}
 
-  if (registerError || !registerData.user) {
-    throw new Error(registerError?.message || "Registration failed");
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export async function handleGoogleSignIn(role: string) {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback?role=${role}`,
+    },
+  });
+
+  if (error) {
+    console.error('Error saat login dengan Google:', error.message);
   }
 
-  // === STEP 2: Create user profile in 'profiles' table ===
-  const { data: profileData, error: profileError } = await supabase
-    .from("users")
-    .insert({
-      id: registerData.user.id,
-      full_name: validatedData.username,
-      role: "user",
-    })
-    .select()
+  return data;
+}
+
+export async function createUserProfile(user: any, role: string) {
+  const { data: existingUser, error: fetchError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('id', user.id)
     .single();
 
-  if (profileError) {
-    // Cek jika username duplikat (kode 23505 untuk PostgreSQL unique violation)
-    if (profileError.code === "23505") {
-      const { data: existingProfile, error: fetchError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", registerData.user.id)
-        .single();
-
-      if (fetchError) throw new Error("Profile exists, fetch failed");
-      return { user: registerData.user, profile: existingProfile };
-    }
-
-    if (profileError.message?.includes("username")) {
-      throw new Error("Username is already taken");
-    }
-
-    throw new Error(`Profile creation failed: ${profileError.message}`);
+  if (fetchError && fetchError.code !== 'PGRST116') {
+    console.error('Error saat memeriksa user:', fetchError.message);
+    return;
   }
 
-  return {
-    user: registerData.user,
-    profile: profileData,
-  };
+  if (!existingUser) {
+    const { error: userError } = await supabase.from('users').insert({
+      id: user.id,
+      email: user.email,
+      full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+      url_photo_product: user.user_metadata?.picture || null,
+      created_at: new Date().toISOString(),
+      role: role,
+    });
+
+    if (userError) {
+      console.error('Error saat menyimpan user profile:', userError.message);
+      return;
+    }
+
+    // Insert ke tabel profil yang spesifik berdasarkan peran.
+    switch (role) {
+      case "digital":
+        await supabase.from("digital_profiles").insert({ id_user: user.id });
+        break;
+      case "tani":
+        await supabase.from("tani_profiles").insert({ id_user: user.id });
+        break;
+      case "bisnis":
+        await supabase.from("business_profiles").insert({ id_user: user.id });
+        break;
+      default:
+        console.warn("Role tidak dikenali, tidak ada profil khusus yang dibuat.");
+        break;
+    }
+
+    console.log('Profil pengguna berhasil dibuat!');
+  } else {
+    console.log('Profil pengguna sudah ada.');
+  }
+}
+
+export async function handleSignOut() {
+  const { error } = await supabase.auth.signOut();
+  window.location.href = "/";
+  if (error) {
+    console.error('Error saat keluar:', error.message);
+  }
 }

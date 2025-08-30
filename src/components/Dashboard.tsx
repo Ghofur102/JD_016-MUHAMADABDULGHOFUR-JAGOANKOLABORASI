@@ -3,7 +3,9 @@ import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { Bell, MessageSquare, Users, Plus, Search, LogOut, Settings, User, Home, Menu, X, Edit } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+import { handleSignOut, supabase } from "@/lib/auth/register";
 
 // Mock data
 const mockStats = {
@@ -85,9 +87,14 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
   const hasTeam = userTeam !== null;
   const isTeamLeader = userTeam?.role === "leader";
 
-  const handleLogout = () => {
+  const handleLogout = async (): Promise<void> => {
     // Handle logout logic here (clear session, etc.)
     console.log("User logged out");
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+    const { error } = await supabase.auth.signOut();
     // Navigate to login page
     onNavigateToLogin();
   };
@@ -132,7 +139,7 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={handleLogout}
+                onClick={handleSignOut}
                 className="text-sm lg:text-base"
               >
                 <LogOut className="size-4 lg:mr-2" />
@@ -173,7 +180,7 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
               </Button>
               <Button 
                 variant="outline" 
-                onClick={handleLogout}
+                onClick={handleSignOut}
                 className="w-full justify-start"
               >
                 <LogOut className="size-4 mr-2" />
@@ -188,7 +195,7 @@ export default function Dashboard({ onNavigateToLogin, onNavigateToCariKolaborat
         {/* Welcome Section */}
         <div className="text-center space-y-3">
           <h1 className="text-2xl sm:text-3xl lg:text-3xl font-bold text-gray-900">
-            Selamat Datang, {userName}! 👋
+            Selamat Datang, Jagoan! 👋
           </h1>
           <p className="text-sm sm:text-base lg:text-lg text-gray-600 max-w-3xl mx-auto">
             Mari berkolaborasi dan wujudkan ide-ide hebat bersama teman-teman lainnya di Banyuwangi

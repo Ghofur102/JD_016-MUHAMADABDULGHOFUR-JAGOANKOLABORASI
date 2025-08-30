@@ -10,13 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 import { Badge } from "./ui/badge";
 import {
   ArrowLeft,
@@ -30,6 +23,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { handleGoogleSignIn } from "@/lib/auth/register";
 
 interface RegisterPageProps {
   onNavigateToLanding: () => void;
@@ -106,22 +100,6 @@ export default function RegisterPage({
       ...prev,
       [fileType]: file,
     }));
-  };
-
-  const simulateGoogleAuth = () => {
-    // Simulate Google OAuth process
-    setTimeout(() => {
-      setGoogleUser({
-        name: "John Doe",
-        email: "john.doe@gmail.com",
-        picture: "https://via.placeholder.com/150",
-      });
-      setFormData((prev) => ({
-        ...prev,
-        fullName: "John Doe",
-      }));
-      setCurrentStep("details");
-    }, 1500);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -309,7 +287,7 @@ export default function RegisterPage({
                 <Button
                   size="lg" variant="dark"
                   className="px-8 lg:px-12 py-3 lg:py-4 text-base lg:text-lg"
-                  onClick={() => setCurrentStep("google-auth")}
+                  onClick={() => setCurrentStep("success")}
                 >
                   Lanjutkan Pendaftaran
                 </Button>
@@ -318,7 +296,7 @@ export default function RegisterPage({
 
             <div className="text-center mt-4 lg:mt-6">
               <p className="text-sm text-gray-600">
-                Sudah punya akun?{" "}
+                Sudah punya akun?
                 <button
                   onClick={onNavigateToLogin}
                   className="text-primary hover:text-primary/80 transition-colors font-medium"
@@ -333,6 +311,7 @@ export default function RegisterPage({
     );
   }
 
+  
   // Google Auth Step
   if (currentStep === "google-auth") {
     return (
@@ -349,7 +328,7 @@ export default function RegisterPage({
           </CardHeader>
           <CardContent className="space-y-4 lg:space-y-6">
             <Button
-              onClick={simulateGoogleAuth}
+              onClick={() => handleGoogleSignIn(selectedCategory!)}
               variant="outline"
               className="w-full h-11 lg:h-12 text-sm lg:text-base"
             >
@@ -374,7 +353,7 @@ export default function RegisterPage({
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Lanjutkan dengan Google
+              Lanjutkan dengan Google (jagoan {selectedCategory})
             </Button>
 
             <div className="text-center">
@@ -393,39 +372,13 @@ export default function RegisterPage({
     );
   }
 
-  // Success Step
-  if (currentStep === "success") {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <Card className="max-w-md w-full shadow-lg">
-          <CardContent className="p-6 lg:p-8 text-center">
-            <div className="w-12 h-12 lg:w-16 lg:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="size-6 lg:size-8 text-green-600" />
-            </div>
-            <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
-              Pendaftaran Berhasil! 🎉
-            </h2>
-            <p className="text-sm lg:text-base text-gray-600 mb-6">
-              Selamat bergabung dengan komunitas Jagoan
-              Banyuwangi! Akun Anda sedang diverifikasi dan akan
-              segera aktif.
-            </p>
-            <Button
-              onClick={onRegisterSuccess}
-              className="w-full"
-            >
-              Masuk ke Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
+  
   // Details Form Step
   const categoryInfo = getCategoryInfo(selectedCategory);
 
-  return (
+  // Success Step
+  if (currentStep === "success") {
+   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -479,20 +432,15 @@ export default function RegisterPage({
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="fullName">
-                    Nama Lengkap *
+                    Nama Lengkap 
                   </Label>
                   <Input
                     id="fullName"
                     name="fullName"
-                    value={formData.fullName}
                     onChange={handleInputChange}
                     required
                     className="h-10 lg:h-12"
-                    readOnly
                   />
-                  <p className="text-xs text-gray-500">
-                    Diambil dari akun Google Anda
-                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -866,7 +814,8 @@ export default function RegisterPage({
           {/* Submit Button */}
           <div className="flex justify-center">
             <Button
-              type="submit"
+              type="button"
+              onClick={() => setCurrentStep("google-auth")}
               size="lg"
               className="px-8 lg:px-12 py-3 lg:py-4 text-base lg:text-lg"
               disabled={
@@ -884,4 +833,32 @@ export default function RegisterPage({
       </div>
     </div>
   );
+  }
+
+   return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <Card className="max-w-md w-full shadow-lg">
+          <CardContent className="p-6 lg:p-8 text-center">
+            <div className="w-12 h-12 lg:w-16 lg:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="size-6 lg:size-8 text-green-600" />
+            </div>
+            <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
+              Pendaftaran Berhasil! 🎉
+            </h2>
+            <p className="text-sm lg:text-base text-gray-600 mb-6">
+              Selamat bergabung dengan komunitas Jagoan
+              Banyuwangi! Akun Anda sedang diverifikasi dan akan
+              segera aktif.
+            </p>
+            <Button
+              onClick={onRegisterSuccess}
+              className="w-full"
+            >
+              Masuk ke Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  
 }

@@ -70,16 +70,7 @@ const mockProfiles = [
   },
 ];
 
-// Mock user team data - simulate user already has a team
-const mockUserTeam = {
-  id: 1,
-  projectName: "Aplikasi Marketplace Produk Lokal Banyuwangi",
-  category: "digital",
-  status: "active",
-  memberCount: 3,
-  maxMembers: 5,
-  role: "leader", // user's role in the team
-};
+
 
 interface DashboardProps {
   onNavigateToLogin: () => void;
@@ -103,8 +94,7 @@ export default function Dashboard({
   const [userProfilePicture, setUserProfilePicture] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Mock state - dalam implementasi nyata, ini akan diambil dari API/context
-  const [userTeam, setUserTeam] = useState(mockUserTeam);
+  const [userTeam, setUserTeam] = useState(null);
   const hasTeam = userTeam !== null;
   const isTeamLeader = userTeam?.role === "leader";
 
@@ -121,6 +111,11 @@ export default function Dashboard({
         setUserProfilePicture(user.user_metadata?.picture || null);
       }
     };
+
+    const teamData = localStorage.getItem("teamData");
+    if (teamData) {
+      setUserTeam(JSON.parse(teamData));
+    }
 
     checkUser();
   }, [router]); // Tambahkan router sebagai dependency

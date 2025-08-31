@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -25,36 +25,12 @@ import {
   UserPlus,
   Menu
 } from "lucide-react";
+import { supabase } from "@/lib/auth/register";
 
 interface BuatKolaborasiProps {
   onNavigateToDashboard: () => void;
 }
 
-// Mock data untuk existing team (jika user sudah punya tim)
-const mockExistingTeam = {
-  id: 1,
-  projectName: "Aplikasi Marketplace Produk Lokal Banyuwangi",
-  category: "digital",
-  description: "Membuat platform e-commerce khusus untuk mempromosikan dan menjual produk-produk lokal Banyuwangi. Platform ini akan memudahkan UMKM untuk memasarkan produk mereka secara online.",
-  goals: "Meningkatkan ekonomi lokal dengan memberikan wadah digital bagi UMKM, meningkatkan awareness produk lokal, dan memudahkan akses konsumen terhadap produk-produk khas Banyuwangi.",
-  duration: "6bulan-1tahun",
-  location: "Banyuwangi & Remote",
-  budget: "Rp 15.000.000",
-  skillsNeeded: "Frontend Developer (React/Vue), Backend Developer (Node.js/PHP), UI/UX Designer, Digital Marketing Specialist",
-  teamSize: "4-5",
-  timeline: "Bulan 1-2: Research dan Design, Bulan 3-4: Development MVP, Bulan 5-6: Testing dan Launch",
-  benefits: "Pengalaman membangun aplikasi real-world, portfolio project, networking dengan UMKM lokal, sertifikat completion",
-  members: [
-    { id: 1, name: "Muhammad Faris", role: "Project Leader & Frontend Developer", avatar: "MF", email: "faris@email.com", phone: "081234567890", status: "leader" },
-    { id: 2, name: "Ahmad Rizki", role: "Backend Developer", avatar: "AR", email: "ahmad.rizki@email.com", phone: "081234567891", status: "active" },
-    { id: 3, name: "Siti Nurhaliza", role: "UI/UX Designer", avatar: "SN", email: "siti.nurhaliza@email.com", phone: "081234567892", status: "active" }
-  ],
-  maxMembers: 5,
-  status: "active",
-  createdAt: "15 Des 2024"
-};
-
-// Mock data untuk available users yang bisa diundang
 const mockAvailableUsers = [
   { id: 4, name: "Budi Santoso", skills: ["Python", "Machine Learning"], avatar: "BS", category: "digital", email: "budi.santoso@email.com" },
   { id: 5, name: "Diana Putri", skills: ["Digital Marketing", "Content Writing"], avatar: "DP", category: "bisnis", email: "diana.putri@email.com" },
@@ -64,25 +40,43 @@ const mockAvailableUsers = [
 ];
 
 export default function BuatKolaborasi({ onNavigateToDashboard }: BuatKolaborasiProps) {
-  // Determine if user has existing team (in real app, this would come from props/context)
-  const [existingTeam, setExistingTeam] = useState(mockExistingTeam); // Set to null if no team
+  const [existingTeam, setExistingTeam] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const hasExistingTeam = existingTeam !== null;
-  const isTeamLeader = existingTeam?.members.find(m => m.status === "leader")?.id === 1; // Assuming current user ID is 1
+  const [userId, setUserId] = useState(null);
+  const isTeamLeader = existingTeam && existingTeam.members && existingTeam.members.find(m => m.status === "leader")?.id === userId;
 
   const [formData, setFormData] = useState({
-    projectName: existingTeam?.projectName || "",
-    category: existingTeam?.category || "",
-    description: existingTeam?.description || "",
-    goals: existingTeam?.goals || "",
-    duration: existingTeam?.duration || "",
-    location: existingTeam?.location || "",
-    budget: existingTeam?.budget || "",
-    skillsNeeded: existingTeam?.skillsNeeded || "",
-    teamSize: existingTeam?.teamSize || "",
-    timeline: existingTeam?.timeline || "",
-    benefits: existingTeam?.benefits || ""
+    projectName: "",
+    category: "",
+    description: "",
+    goals: "",
+    duration: "",
+    location: "",
+    budget: "",
+    skillsNeeded: "",
+    teamSize: "",
+    timeline: "",
+    benefits: ""
   });
+
+  useEffect(() => {
+    const teamData = localStorage.getItem("teamData");
+    if (teamData) {
+      const parsedData = JSON.parse(teamData);
+      setExistingTeam(parsedData);
+      setFormData(parsedData);
+    }
+
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+
+    getUser();
+  }, []);
 
   const [submittedSuccessfully, setSubmittedSuccessfully] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
@@ -105,19 +99,39 @@ export default function BuatKolaborasi({ onNavigateToDashboard }: BuatKolaborasi
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(hasExistingTeam ? "Team updated:" : "New team created:", formData);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setSubmittedSuccessfully(true);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      const teamData = {
+        ...formData,
+        members: [{
+          id: user.id,
+          name: user.user_metadata?.full_name || user.user_metadata?.name || "Jagoan!",
+          role: "Project Leader",
+          avatar: user.user_metadata?.picture || null,
+          email: user.email,
+          phone: "",
+          status: "leader"
+        }],
+        maxMembers: formData.teamSize,
+        status: "active",
+        createdAt: new Date().toISOString()
+      };
+      localStorage.setItem("teamData", JSON.stringify(teamData));
+      console.log(hasExistingTeam ? "Team updated:" : "New team created:", teamData);
       
-      // Auto redirect after 3 seconds
+      // Simulate API call
       setTimeout(() => {
-        onNavigateToDashboard();
-      }, 3000);
-    }, 1000);
+        setSubmittedSuccessfully(true);
+        
+        // Auto redirect after 3 seconds
+        setTimeout(() => {
+          onNavigateToDashboard();
+        }, 3000);
+      }, 1000);
+    }
   };
 
   const filteredUsers = mockAvailableUsers.filter(user => 
@@ -269,18 +283,18 @@ export default function BuatKolaborasi({ onNavigateToDashboard }: BuatKolaborasi
                       {existingTeam.status === "active" ? "Aktif" : "Selesai"}
                     </Badge>
                     <Badge variant="outline">
-                      {existingTeam.members.length}/{existingTeam.maxMembers} Anggota
+                      {existingTeam && existingTeam.members ? `${existingTeam.members.length}/${existingTeam.maxMembers} Anggota` : ''}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2 mb-3">
-                    {existingTeam.members.slice(0, 4).map((member) => (
+                    {existingTeam && existingTeam.members && existingTeam.members.slice(0, 4).map((member) => (
                       <Avatar key={member.id} className="h-8 w-8">
                         <AvatarFallback className="bg-blue-600 text-white text-xs">
                           {member.avatar}
                         </AvatarFallback>
                       </Avatar>
                     ))}
-                    {existingTeam.members.length > 4 && (
+                    {existingTeam && existingTeam.members && existingTeam.members.length > 4 && (
                       <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center">
                         <span className="text-xs text-gray-600">+{existingTeam.members.length - 4}</span>
                       </div>
@@ -366,11 +380,11 @@ export default function BuatKolaborasi({ onNavigateToDashboard }: BuatKolaborasi
                 Anggota Tim Saat Ini
               </CardTitle>
               <p className="text-center text-gray-600 text-sm lg:text-base">
-                {existingTeam.members.length} dari {existingTeam.maxMembers} anggota
+                {existingTeam && existingTeam.members ? `${existingTeam.members.length} dari ${existingTeam.maxMembers} anggota` : ''}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              {existingTeam.members.map((member) => (
+              {existingTeam && existingTeam.members && existingTeam.members.map((member) => (
                 <div key={member.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
                   <Avatar className="h-12 w-12">
                     <AvatarFallback className="bg-blue-600 text-white">
